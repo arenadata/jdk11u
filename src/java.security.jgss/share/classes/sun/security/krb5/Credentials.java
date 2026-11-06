@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2025, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -321,11 +321,15 @@ public class Credentials {
         throws KrbException, IOException {
 
         if (ticketCache == null) {
-            // The default ticket cache on Windows and Mac is not a file.
+            // On Windows/MacOSX/Linux, use native system library calls to acquire
+            // credentials from any supported credential cache types on those
+            // platforms (in particular, the default ticket cache on Windows and
+            // MacOSX is not a file, so cannot use the pure Java code)
             String os = java.security.AccessController.doPrivileged(
                         new sun.security.action.GetPropertyAction("os.name"));
             if (os.toUpperCase(Locale.ENGLISH).startsWith("WINDOWS") ||
-                    os.toUpperCase(Locale.ENGLISH).contains("OS X")) {
+                    os.toUpperCase(Locale.ENGLISH).contains("OS X") ||
+                    os.toUpperCase(Locale.ENGLISH).startsWith("LINUX")) {
                 Credentials creds = acquireDefaultCreds();
                 if (creds == null) {
                     if (DEBUG) {
@@ -408,7 +412,7 @@ public class Credentials {
     // It assumes that the GSS call has
     // the privilege to access the default cache file.
 
-    // This method is only called on Windows and Mac OS X, the native
+    // This method is only called on Windows, MacOSX and Linux, the native
     // acquireDefaultNativeCreds is also available on these platforms.
     public static synchronized Credentials acquireDefaultCreds() {
         Credentials result = null;
@@ -532,6 +536,8 @@ public class Credentials {
                         public Void run() {
                                 if (System.getProperty("os.name").contains("OS X")) {
                                     System.loadLibrary("osxkrb5");
+                                } else if (System.getProperty("os.name").startsWith("Linux")) {
+                                    System.loadLibrary("linuxkrb5");
                                 } else {
                                     System.loadLibrary("w2k_lsa_auth");
                                 }

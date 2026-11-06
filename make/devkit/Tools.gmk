@@ -138,6 +138,8 @@ RPM_LIST := \
     libXau libXau-devel \
     libgcc \
     zlib zlib-devel \
+    libcom_err libcom_err-devel \
+    krb5-libs krb5-devel \
     libffi libffi-devel \
     fontconfig fontconfig-devel \
     systemtap-sdt-devel \
@@ -280,6 +282,12 @@ ifeq ($(ARCH), x86_64)
 
   SYSROOT_LINKS += $(SYSROOT)/usr/include/ffi.h $(SYSROOT)/usr/include/ffitarget.h
 endif
+
+# Create a link for com_err.h so that it's visible by default
+$(SYSROOT)/usr/include/com_err.h: $(rpms)
+	cd $(@D) && rm -f $(@F) && ln -s et/$(@F) .
+
+SYSROOT_LINKS += $(SYSROOT)/usr/include/com_err.h
 
 ##########################################################################################
 
